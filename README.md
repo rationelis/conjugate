@@ -1,2 +1,2 @@
 # conjugate
-A toolbox to generate cards for Anki
+A tool to automate the creation of conjugation flashcards for Anki.
