@@ -4,7 +4,6 @@ import random
 import codecs
 
 from bs4 import BeautifulSoup
-
 from os.path import exists
 
 class BulkCardBuilder:
@@ -17,7 +16,6 @@ class BulkCardBuilder:
 
         len_open = len(self.open)
         len_done = len(self.done)
-
         print("Stats: " + str(len_open) + " verbs to go. " + str(len_done) + " verbs done. " + str(len_done / len_open * 100) + "% done!")
 
         if not exists("cardsoftoday.txt"):
@@ -41,6 +39,7 @@ class BulkCardBuilder:
 
     def download_url(self, url):
         r = requests.get(url)
+        # UTF-8 to support Cyrillic. 
         r.encoding = 'utf-8'
         return r.text
 
@@ -144,18 +143,17 @@ class BulkCardBuilder:
             # Remove to prevent duplicates.
             all_cards.remove(chosen_card)
 
-        # TODO: Remove this verb from open 
+        # Insert this verb to the done list.
+        self.done.insert(len(self.done), self.open[self.url])
+
+        # Remove this verb from the open list.
         self.open.pop(self.url)
-        self.done.insert(len(self.done), self.url)
 
         with open('open.json', 'w') as data_file:
             self.open = json.dump(self.open, data_file)
 
         with open('done.json', 'w') as data_file:
             self.done = json.dump(self.done, data_file)
-
-        # TODO: Add it to done.
-
 
         print("DONE!")
 
