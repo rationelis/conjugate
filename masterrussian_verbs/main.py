@@ -8,7 +8,6 @@ from bs4 import BeautifulSoup
 from os.path import exists
 
 class BulkCardBuilder:
-
     def __init__(self):
         with open("open.json") as f:
             self.open = json.load(f)
@@ -19,19 +18,25 @@ class BulkCardBuilder:
         len_open = len(self.open)
         len_done = len(self.done)
 
-        print(str(len_open) + " verbs to go.")
-        print(str(len_done) + " verbs done.")
-        print(str(len_done / len_open * 100) + "% done!")
+        print("Stats: " + str(len_open) + " verbs to go. " + str(len_done) + " verbs done. " + str(len_done / len_open * 100) + "% done!")
 
         if not exists("cardsoftoday.txt"):
             self.file = codecs.open("cardsoftoday.txt", "w+", "utf-8")
         else:
             self.file = codecs.open("cardsoftoday.txt", "a", "utf-8")
 
-        self.url = random.choice(self.open)
-        html = self.download_url(self.url)
+        # Pick random URL from the list.
+        self.url = random.choice(range(len(self.open)))
+
+        # Download URL.
+        html = self.download_url(self.open[self.url])
+
+        # Go through HTML to gather conjugations.
         table = self.get_conjugation_table(html)
+
         # self.print_table(table)
+        
+        # Add cards dialog.
         self.add_cards(table)
 
     def download_url(self, url):
@@ -94,9 +99,9 @@ class BulkCardBuilder:
         return conjugation_table
 
     def add_cards(self, table):
-        print("The verb is: " + table.imp_infinitive + " / " + table.per_infinitive)
+        print("Making card for " + table.imp_infinitive + " / " + table.per_infinitive)
 
-        image = input("Image URL:")
+        image = input("Paste image URL:")
         sentence_with_delimiters = input("Insert sentence (\P for pronoun, \C for conjugation):")
 
         all_cards = []
@@ -104,10 +109,7 @@ class BulkCardBuilder:
 
         def get_cards_from_conjugations(conjugation_list, time):
             for idx, val in enumerate(conjugation_list):
-                print(count[0])
-                print(str(count[0]))
                 card = "<img src='" + image + "?random=" + str(count[0]) + "'/>;"
-                print(card)
                 card += self.get_pronoun(idx) + " - " + time + ";"
                 # Gap sentence for questioning.
                 card += sentence_with_delimiters.replace("\P", self.get_pronoun(idx)).replace("\C", "(" + table.imp_infinitive + ")") + ";"
@@ -124,15 +126,38 @@ class BulkCardBuilder:
         get_cards_from_conjugations(table.per_past_conjugations, "Perfective Paste Tense")
         get_cards_from_conjugations(table.per_future_conjugations, "Perfective Future Tense")
 
-        pick_n_random = 10
+        pick_n_random = input("How many cards need to be generated? (Max 20, default 10):")
+
+        if pick_n_random == "":
+            pick_n_random = 10
+        elif int(pick_n_random) > 20:
+            pick_n_random = 20
+
         print("Adding " + str(pick_n_random) + " random cards to file.")
 
-        for i in range(0,pick_n_random):
-            self.file.write(random.choice(all_cards) + "\n")
+        for i in range(0,int(pick_n_random)):
+            chosen_card = random.choice(all_cards)
+            
+            # Write card to file.
+            self.file.write(chosen_card + "\n")
 
-        # TODO: Remove this verb from open and add it to done.
+            # Remove to prevent duplicates.
+            all_cards.remove(chosen_card)
 
-        print("DONE. NEXT!\n")
+        # TODO: Remove this verb from open 
+        self.open.pop(self.url)
+        self.done.insert(len(self.done), self.url)
+
+        with open('open.json', 'w') as data_file:
+            self.open = json.dump(self.open, data_file)
+
+        with open('done.json', 'w') as data_file:
+            self.done = json.dump(self.done, data_file)
+
+        # TODO: Add it to done.
+
+
+        print("DONE!")
 
     def get_pronoun(self, index):
         match index:
