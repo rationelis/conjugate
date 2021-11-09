@@ -24,7 +24,11 @@ class BulkCardBuilder:
             self.file = codecs.open("cardsoftoday.txt", "a", "utf-8")
 
         # Pick random URL from the list.
-        self.url = random.choice(range(len(self.open)))
+        custom = input("Insert custom link (optional):")
+        if custom == "":
+            self.url = random.choice(range(len(self.open)))
+        else:
+            self.url = self.open.index(custom)
 
         # Download URL.
         html = self.download_url(self.open[self.url])
@@ -99,6 +103,7 @@ class BulkCardBuilder:
 
     def add_cards(self, table):
         print("Making card for " + table.imp_infinitive + " / " + table.per_infinitive)
+        print("Link: " + self.open[self.url])
 
         image = input("Paste image URL:")
         sentence_with_delimiters = input("Insert sentence (\P for pronoun, \C for conjugation):")
