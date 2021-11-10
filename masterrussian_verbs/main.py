@@ -16,7 +16,7 @@ class BulkCardBuilder:
 
         len_open = len(self.open)
         len_done = len(self.done)
-        print("Stats: " + str(len_open) + " verbs to go. " + str(len_done) + " verbs done. " + str(len_done / len_open * 100) + "% done!")
+        print("\nStats: " + str(len_open) + " verbs to go. " + str(len_done) + " verbs done. " + str(round(len_done / len_open * 100)) + "% done!")
 
         if not exists("cardsoftoday.txt"):
             self.file = codecs.open("cardsoftoday.txt", "w+", "utf-8")
@@ -24,7 +24,7 @@ class BulkCardBuilder:
             self.file = codecs.open("cardsoftoday.txt", "a", "utf-8")
 
         # Pick random URL from the list.
-        custom = input("Insert custom link (optional):")
+        custom = input("Manual link (optional, leave blank to continue): ")
         if custom == "":
             self.url = random.choice(range(len(self.open)))
         else:
@@ -102,42 +102,73 @@ class BulkCardBuilder:
         return conjugation_table
 
     def add_cards(self, table):
-        print("Making card for " + table.imp_infinitive + " / " + table.per_infinitive)
-        print("Link: " + self.open[self.url])
+        print("\nRussian verb: " + table.imp_infinitive + " / " + table.per_infinitive)
+        print("Found on: " + self.open[self.url])
+        print("English definition: " + table.definition)
 
-        image = input("Paste image URL:")
-        sentence_with_delimiters = input("Insert sentence (\P for pronoun, \C for conjugation):")
+        # We ask for three image and sentence formats.
+        delimiters_sentences = []
+        images = []
+
+        print("\nProvide three card formats for this verb. Replace \P in the sentence for pronoun and \C for conjugation.")
+        images.insert(0, input("Image URL #1: "))
+        delimiters_sentences.insert(0, input("Sentence #1: "))
+        images.insert(1, input("\nImage URL #2: "))
+        delimiters_sentences.insert(1, input("Sentence #2: "))
+        images.insert(2, input("\nImage URL #3: "))
+        delimiters_sentences.insert(2, input("Sentence #3: "))
 
         all_cards = []
         count = [0]
 
         def get_cards_from_conjugations(conjugation_list, time):
             for idx, val in enumerate(conjugation_list):
-                card = "<img src='" + image + "?random=" + str(count[0]) + "'/>;"
-                card += self.get_pronoun(idx) + " - " + time + ";"
+                # Determine whether which pronouns should be used.
+                if(len(conjugation_list) == 4): 
+                    pronoun = self.get_pronoun_past(idx)
+                else:   
+                    pronoun = self.get_pronoun(idx)
+
+                # TODO: refactor this.
+                if "Perfective" in time:
+                    infinitive = table.per_infinitive
+                else:
+                    infinitive = table.imp_infinitive
+
+                # Pick index for card format
+                card_format_index = random.randint(0,2)
+                
+                # Add image to card.
+                card = "<img src='" + images[card_format_index] + "?random=" + str(count[0]) + "'/>;"
+
+                # Add Form and perspective to card.
+                card += pronoun + " - " + time + ";"
+
                 # Gap sentence for questioning.
-                card += sentence_with_delimiters.replace("\P", self.get_pronoun(idx)).replace("\C", "(" + table.imp_infinitive + ")") + ";"
+                card += delimiters_sentences[card_format_index].replace("\P", pronoun).replace("\C", "(" + infinitive + ")") + ";"
+
                 # Single word answer for input validation.
                 card += val + ";"
+
                 # Full sentence answer
-                card += sentence_with_delimiters.replace("\P", self.get_pronoun(idx)).replace("\C", "<b>" + val + "</b>")
+                card += delimiters_sentences[card_format_index].replace("\P", pronoun).replace("\C", "<b>" + val + "</b>")
 
                 all_cards.insert(len(all_cards), card)
                 count[0] += 1
 
-        get_cards_from_conjugations(table.imp_present_conjugations, "Present Tense")
+        get_cards_from_conjugations(table.imp_present_conjugations, "Imperfective Present Tense")
         get_cards_from_conjugations(table.imp_past_conjugations, "Imperfective Paste Tense")
         get_cards_from_conjugations(table.per_past_conjugations, "Perfective Paste Tense")
         get_cards_from_conjugations(table.per_future_conjugations, "Perfective Future Tense")
 
-        pick_n_random = input("How many cards need to be generated? (Max 20, default 10):")
+        pick_n_random = input("\nHow many cards need to be generated? (Max 20, default 10): ")
 
         if pick_n_random == "":
             pick_n_random = 10
         elif int(pick_n_random) > 20:
             pick_n_random = 20
 
-        print("Adding " + str(pick_n_random) + " random cards to file.")
+        print("\nAdding " + str(pick_n_random) + " randomly picked cards to the output file.")
 
         for i in range(0,int(pick_n_random)):
             chosen_card = random.choice(all_cards)
@@ -151,7 +182,7 @@ class BulkCardBuilder:
         # Insert this verb to the done list.
         self.done.insert(len(self.done), self.open[self.url])
 
-        # Remove this verb from the open list.
+        # # Remove this verb from the open list.
         self.open.pop(self.url)
 
         with open('open.json', 'w') as data_file:
@@ -160,7 +191,7 @@ class BulkCardBuilder:
         with open('done.json', 'w') as data_file:
             self.done = json.dump(self.done, data_file)
 
-        print("DONE!")
+        print("\nDONE.")
 
     def get_pronoun(self, index):
         match index:
