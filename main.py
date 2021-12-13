@@ -52,13 +52,26 @@ class MasterRussianVerbs:
             conjugation_table.imp_present_conjugations = []
             for i in range(0,6):
                 conjugation = soup.find("div", {"id": "present" + str(i + 1)})
-                conjugation_table.imp_present_conjugations.insert(i, conjugation["data-stressed"])
+                
+                # Conjugations containing ё have no data-stressed value. 
+                try:
+                    name = conjugation["data-stressed"]
+                except:
+                    name = conjugation["data-default"]
+
+                conjugation_table.imp_present_conjugations.insert(i, name)
 
             conjugation_table.imp_past_conjugations = []
             ids = ["past_singM", "past_singF", "past_singN", "past_plur"]
             for i in range(0,4):
                 conjugation = soup.find("div", {"id": ids[i]})
-                conjugation_table.imp_past_conjugations.insert(i, conjugation["data-stressed"])
+
+                try:
+                    name = conjugation["data-stressed"]
+                except:
+                    name = conjugation["data-default"]
+
+                conjugation_table.imp_past_conjugations.insert(i, name)
         else:
             name = soup.find("span", {"id": "mainform"}).contents[0].split(" ")
             conjugation_table.definition = name[2] + " " + name[3]
@@ -67,13 +80,25 @@ class MasterRussianVerbs:
             conjugation_table.per_future_conjugations = []
             for i in range(0,6):
                 conjugation = soup.find("div", {"id": "future" + str(i + 1)})
-                conjugation_table.per_future_conjugations.insert(i, conjugation["data-stressed"])
+
+                try:
+                    name = conjugation["data-stressed"]
+                except:
+                    name = conjugation["data-default"]
+
+                conjugation_table.per_future_conjugations.insert(i, name)
 
             conjugation_table.per_past_conjugations = []
             ids = ["past_singM", "past_singF", "past_singN", "past_plur"]
             for i in range(0,4):
                 conjugation = soup.find("div", {"id": ids[i]})
-                conjugation_table.per_past_conjugations.insert(i, conjugation["data-stressed"])
+
+                try:
+                    name = conjugation["data-stressed"]
+                except:
+                    name = conjugation["data-default"]
+
+                conjugation_table.per_past_conjugations.insert(i, name)
 
         return conjugation_table
 
